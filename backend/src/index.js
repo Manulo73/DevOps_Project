@@ -2,6 +2,7 @@ const cors = require("cors");
 const express = require("express");
 
 const dashboardRoutes = require("./routes/dashboard");
+const incidentRoutes = require("./routes/incidents")
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -66,6 +67,7 @@ app.use((req, res, next) => {
 // Routes
 // ─────────────────────────────────────────
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/incidents", incidentRoutes);
 
 // ─────────────────────────────────────────
 // Start server
