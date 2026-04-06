@@ -275,10 +275,67 @@ async function editIncident(req, res, next) {
   }
 }
 
+// Update only incident status
+async function updateIncidentStatus(req, res, next) {
+  try {
+    const pool = await getConnection();
+
+    const { incident_id } = req.params; // public_id
+    const { status } = req.body;
+
+    /* =========================
+       1️⃣ Validate status
+    ========================== */
+    const validStatuses = ["open", "in_progress", "resolved", "closed"];
+
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    /* =========================
+       2️⃣ Update query
+       - Only set resolved_at once
+       - Do NOT erase history
+    ========================== */
+    const query = `
+      UPDATE incidents
+      SET 
+        status = @status,
+        resolved_at = CASE
+          WHEN @status = 'resolved' AND resolved_at IS NULL THEN GETDATE()
+          ELSE resolved_at
+        END
+      OUTPUT INSERTED.*
+      WHERE public_id = @incident_id
+    `;
+
+    const result = await pool.request()
+      .input("incident_id", sql.UniqueIdentifier, incident_id)
+      .input("status", sql.NVarChar(20), status)
+      .query(query);
+
+    /* =========================
+       3️⃣ Not found handling
+    ========================== */
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ message: "Incident not found" });
+    }
+
+    /* =========================
+       4️⃣ Return updated row
+    ========================== */
+    res.json(result.recordset[0]);
+
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
     getIncidents,
     createIncident,
     getFormSelectData,
     getIncidentData,
-    editIncident
+    editIncident,
+    updateIncidentStatus
 };

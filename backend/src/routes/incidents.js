@@ -10,5 +10,6 @@ router.get("/get-form-prep-data", incidentController.getFormSelectData);
 router.post("/create-incident", incidentController.createIncident);
 router.get("/:incident_id", incidentController.getIncidentData);
 router.put("/:incident_id", incidentController.editIncident);
+router.patch("/:incident_id/status", incidentController.updateIncidentStatus);
 
 module.exports = router;
